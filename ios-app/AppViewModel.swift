@@ -35,6 +35,7 @@ final class AppViewModel: ObservableObject {
     }
 
     // MARK: - Tab
+    @Published var webClipIsRunning = false
     @Published var selectedTab: AppTab = .pairing
 
     // MARK: - Wallet Cards tab

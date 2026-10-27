@@ -1,0 +1,61 @@
+name: Build WebClip IPA
+
+on:
+  push:
+    branches: [main, 'webclip/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webclip-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect Xcode toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Check WebClip payload and isolation
+        run: |
+          mkdir -p build
+          swiftc ios-app/WebClipSpec.swift scripts/check-webclip.swift -o build/check-webclip
+          build/check-webclip
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build unsigned device app and package IPA
+        run: |
+          set -o pipefail
+          bash build-ipa.sh Release 2>&1 | tee build-ipa.log
+          mv build/AirCard-iOS.ipa build/AirCard-WebClip-unsigned.ipa
+      - name: Validate IPA structure
+        run: |
+          python3 scripts/verify-ipa.py build/AirCard-WebClip-unsigned.ipa
+          shasum -a 256 build/AirCard-WebClip-unsigned.ipa > build/SHA256SUMS.txt
+          cp docs/WEBCLIP-TESTING.md build/WEBCLIP-TESTING.md
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirCard-WebClip-unsigned-${{ github.run_number }}
+          path: |
+            build/AirCard-WebClip-unsigned.ipa
+            build/SHA256SUMS.txt
+            build/WEBCLIP-TESTING.md
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ github.run_number }}
+          path: build-ipa.log
+          if-no-files-found: ignore
+          retention-days: 7

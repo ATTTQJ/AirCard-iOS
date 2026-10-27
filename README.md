@@ -1,3 +1,7 @@
+> **ATTTQJ WebClip 实验分支**：新增手机端图标主题页面，写入入口限定 iOS 27.0.1。
+> 通过 GitHub Actions 构建未签名 IPA，使用前请阅读 [测试说明](docs/WEBCLIP-TESTING.md)。
+> 当前未经过实机验证；编译成功不等于可用性或数据安全保证。
+
 # AirCard-iOS
 
 <p align="center">

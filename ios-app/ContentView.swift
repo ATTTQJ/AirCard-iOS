@@ -854,6 +854,20 @@ struct ContentView: View {
             TendiesView()
                 .tabItem { Label("Wallpapers", systemImage: "photo.stack.fill") }
                 .tag(AppTab.wallpapers)
+
+            WebClipView()
+                .tabItem { Label("图标主题", systemImage: "square.grid.2x2.fill") }
+                .tag(AppTab.webClips)
+        }
+        .disabled(vm.webClipIsRunning)
+        .overlay {
+            if vm.webClipIsRunning {
+                ZStack {
+                    Color.black.opacity(0.25).ignoresSafeArea()
+                    ProgressView("正在写入 WebClip，请保持前台…")
+                        .padding(24).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                }
+            }
         }
         .alert("Notice", isPresented: Binding(
             get: { vm.errorMessage != nil },
