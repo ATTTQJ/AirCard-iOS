@@ -320,3 +320,10 @@
 "开始目录验证" = "Start directory verification";
 "将在 WebClips 目录创建随机测试文件，读回核对字节后尝试清理。若操作中断可能残留测试文件。请保持应用在前台；结果会保存在目录验证报告中。" = "A random test file will be created in WebClips, read back and checked, then cleanup will be attempted. Interruption may leave a test file behind. Keep the app open; results are saved in the directory report.";
 "请先完成配对并连接 LocalDevVPN。" = "Complete pairing and connect LocalDevVPN first.";
+"查看、复制或保存完整报告" = "View, copy or save full report";
+"完整诊断报告" = "Full diagnostic report";
+"完整报告已复制，可以返回聊天粘贴。" = "Full report copied. Return to the chat and paste it.";
+"复制完整报告" = "Copy full report";
+"保存为 TXT 文件" = "Save as TXT file";
+"报告文件已保存。" = "Report file saved.";
+"保存报告失败" = "Could not save report";

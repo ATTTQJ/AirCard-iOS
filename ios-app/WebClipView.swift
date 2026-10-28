@@ -54,7 +54,7 @@ struct WebClipView: View {
                         .disabled(!supported || !app.hasPairingFile || !app.vpnUp || model.isRunning || otherOperationRunning)
                     if let report = model.directoryReport {
                         Text(String(report.prefix(180))).font(.caption).textSelection(.enabled)
-                        ShareLink(item: report) { Label("导出目录验证报告", systemImage: "square.and.arrow.up") }
+                        DiagnosticReportActions(report: report)
                     }
                 }
                 if model.mayRefresh {
@@ -264,7 +264,7 @@ struct WebClipView: View {
                         DisclosureGroup("排查信息") {
                             if let diagnostic = receipt.diagnostic {
                                 Text(diagnostic).font(.caption).textSelection(.enabled)
-                                ShareLink(item: diagnostic) { Label("导出诊断日志", systemImage: "square.and.arrow.up") }
+                                DiagnosticReportActions(report: diagnostic)
                             }
                             Text(receipt.spec.targetPath).font(.system(.caption2, design: .monospaced)).textSelection(.enabled)
                         }

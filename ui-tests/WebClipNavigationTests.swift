@@ -57,6 +57,27 @@ final class WebClipNavigationTests: XCTestCase {
         capture(app, "05-English-WebClip")
     }
 
+    func testFullReportCanBeCopiedWithoutVPN() throws {
+        let app = XCUIApplication()
+        let report = "目录验证测试\n" + String(repeating: "完整日志内容\n", count: 80) + "REPORT-END-MARKER"
+        app.launchArguments = ["-aircard.language", "zh-Hans", "-aircard.dont_show_support_on_launch", "YES", "-webclip.directoryReport", report]
+        app.launch()
+        app.tabBars.buttons["图标主题"].tap()
+        let open = app.buttons["webclip.openReport"]
+        for _ in 0..<10 {
+            if open.exists && open.isHittable { break }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(open.exists && open.isHittable)
+        open.tap()
+        XCTAssertTrue(app.buttons["webclip.copyReport"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["webclip.fullReport"].label.hasSuffix("REPORT-END-MARKER"), "Report must not be truncated to the preview")
+        app.buttons["webclip.copyReport"].tap()
+        XCTAssertTrue(app.staticTexts["完整报告已复制，可以返回聊天粘贴。"].exists)
+        XCTAssertTrue(app.buttons["webclip.saveReport"].isEnabled)
+        capture(app, "06-Full-report-copy-and-save")
+    }
+
     private func capture(_ app: XCUIApplication, _ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name
