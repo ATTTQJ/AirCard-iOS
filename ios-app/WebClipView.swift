@@ -71,7 +71,7 @@ struct WebClipView: View {
                     Button("完成") { editing = false }
                 }
             }
-            .safeAreaInset(edge: .bottom) { actionBar }
+            .webClipActionBar { actionBar }
             .onAppear { app.refreshNetworkStatus(); app.refreshPairingFile() }
             .task(id: photo) {
                 guard let photo else { return }
@@ -212,17 +212,25 @@ struct WebClipView: View {
                 Text(LocalizedStringKey(reason)).font(.caption).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             }
-            Button {
-                editing = false
-                showConfirm = true
-            } label: {
-                Label("新增一个测试图标", systemImage: "plus.app.fill")
-                    .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
+            if #available(iOS 26.0, *) {
+                installButton.buttonStyle(.glassProminent)
+            } else {
+                installButton.buttonStyle(.borderedProminent)
             }
-            .buttonStyle(.borderedProminent).disabled(blockedReason != nil)
-            .accessibilityIdentifier("webclip.install")
         }
-        .padding(.horizontal).padding(.vertical, 10).background(.bar)
+        .padding(.horizontal).padding(.vertical, 10)
+    }
+
+    private var installButton: some View {
+        Button {
+            editing = false
+            showConfirm = true
+        } label: {
+            Label("新增一个测试图标", systemImage: "plus.app.fill")
+                .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
+        }
+        .disabled(blockedReason != nil)
+        .accessibilityIdentifier("webclip.install")
     }
 
     private var historySheet: some View {
@@ -266,6 +274,18 @@ struct WebClipView: View {
             }
             .navigationTitle("WebClip 使用说明").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { showHelp = false } } }
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func webClipActionBar<Bar: View>(@ViewBuilder content: () -> Bar) -> some View {
+        if #available(iOS 26.0, *) {
+            // System scroll-edge treatment keeps content legible under glass controls.
+            safeAreaBar(edge: .bottom, content: content)
+        } else {
+            safeAreaInset(edge: .bottom) { content().background(.bar) }
         }
     }
 }

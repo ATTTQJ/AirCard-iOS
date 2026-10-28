@@ -9,6 +9,9 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
     info = plistlib.loads(archive.read(root + 'Info.plist'))
     assert info['CFBundleIdentifier'] == 'com.atttqj.aircard.webclip', info['CFBundleIdentifier']
     assert info['CFBundleDisplayName'] == 'AirCard WebClip'
+    sdk = info['DTSDKName']
+    assert sdk.startswith('iphoneos') and int(sdk.removeprefix('iphoneos').split('.')[0]) >= 26, sdk
+    assert info.get('UIDesignRequiresCompatibility', False) is False, 'Legacy design compatibility must be disabled'
     assert archive.getinfo(root + info['CFBundleExecutable']).file_size > 0
     assert not any('/_CodeSignature/' in name for name in archive.namelist())
     assert root + 'embedded.mobileprovision' not in archive.namelist()
