@@ -146,7 +146,7 @@ struct WebClipView: View {
     }
 
     private var imageSection: some View {
-        Section("1 · 选择图标") {
+        Section {
             PhotosPicker(selection: $photo, matching: .images) {
                 Label("从相册选择", systemImage: "photo")
             }.disabled(importing)
@@ -156,6 +156,8 @@ struct WebClipView: View {
             if png != nil {
                 Button("移除所选图片", role: .destructive) { png = nil; photo = nil }
             }
+        } header: {
+            Text("1 · 选择图标")
         } footer: {
             Text("图片居中裁剪为正方形；透明区域使用白底。可先在相册中裁剪到满意的位置。")
         }
@@ -183,7 +185,7 @@ struct WebClipView: View {
     }
 
     private var readinessSection: some View {
-        Section("3 · 检查设备") {
+        Section {
             readiness("系统为 iOS 27.0.1", ready: supported)
             readiness("已导入本机配对文件", ready: app.hasPairingFile)
             readiness("已检测到本地 VPN", ready: app.vpnUp)
@@ -191,6 +193,8 @@ struct WebClipView: View {
                 Button("前往首页设置配对与 VPN") { editing = false; app.selectedTab = .pairing }
             }
             Button("重新检查连接") { app.refreshNetworkStatus(); app.refreshPairingFile() }
+        } header: {
+            Text("3 · 检查设备")
         } footer: {
             Text("准备状态只检查前置条件，不代表此设备上的写入一定成功。")
         }
