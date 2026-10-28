@@ -18,8 +18,12 @@ final class WebClipNavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["webclip.install"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["webclip.install"].isEnabled, "Writing must be blocked without prerequisites")
         capture(app, "02-WebClip-preview")
-        app.swipeUp()
-        XCTAssertTrue(app.textFields["webclip.bundleID"].exists)
+        let bundleField = app.textFields["webclip.bundleID"]
+        for _ in 0..<6 {
+            if bundleField.exists && bundleField.isHittable { break }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(bundleField.exists && bundleField.isHittable, "App identifier must be reachable by scrolling")
         capture(app, "03-WebClip-target-and-readiness")
         app.buttons["webclip.history"].tap()
         XCTAssertTrue(app.staticTexts["暂无写入记录"].waitForExistence(timeout: 5))
