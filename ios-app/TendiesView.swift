@@ -54,7 +54,7 @@ struct TendiesView: View {
                         HStack(spacing: 8) {
                             Spacer()
                             Image(systemName: "doc.badge.plus")
-                            Text(vm.tendieItems.isEmpty ? "Choose .tendies from Files…" : "Import More Wallpapers…")
+                            Text(LocalizedStringKey(vm.tendieItems.isEmpty ? "Choose .tendies from Files…" : "Import More Wallpapers…"))
                             Spacer()
                         }
                         .font(.headline)
@@ -88,11 +88,11 @@ struct TendiesView: View {
                 if !vm.tendieItems.isEmpty {
                     Section {
                         HStack {
-                            Text("\(vm.tendieItems.count) Wallpapers Imported")
+                            Text("Imported wallpapers: \(vm.tendieItems.count)")
                                 .font(.caption.bold())
                                 .foregroundColor(.secondary)
                             Spacer()
-                            Button(selectedAll ? "Deselect All" : "Select All") {
+                            Button(LocalizedStringKey(selectedAll ? "Deselect All" : "Select All")) {
                                 let target = !selectedAll
                                 for i in 0..<vm.tendieItems.count {
                                     vm.tendieItems[i].isSelected = target
@@ -151,7 +151,7 @@ struct TendiesView: View {
                                 HStack(spacing: 8) {
                                     Spacer()
                                     Image(systemName: "sparkles")
-                                    Text("Flash \(selectedCount) Wallpaper\(selectedCount == 1 ? "" : "s")")
+                                    Text("Flash selected wallpapers (\(selectedCount))")
                                     Spacer()
                                 }
                                 .font(.headline)
@@ -190,7 +190,7 @@ struct TendiesView: View {
                 if !vm.tendiesFlashLog.isEmpty {
                     Section {
                         CompactLogView(
-                            title: "Flash Log (\(vm.tendiesFlashLog.count) lines)",
+                            title: "Flash Log",
                             lines: vm.tendiesFlashLog,
                             onClear: { vm.tendiesFlashLog.removeAll() }
                         )
@@ -291,7 +291,7 @@ struct TendieRowView: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
 
-                    Text("\(item.descriptorCount) item\(item.descriptorCount == 1 ? "" : "s")")
+                    Text("Items: \(item.descriptorCount)")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -370,7 +370,7 @@ struct TendieDetailSheet: View {
 
     private func detailRow(title: String, value: String) -> some View {
         HStack {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             Spacer()

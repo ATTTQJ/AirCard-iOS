@@ -99,6 +99,7 @@ final class WebClipViewModel: ObservableObject {
               app.tendiesFlashPhase != .running, app.pairingPhase != .pairing,
               !app.isDetectingContainer else { error = WebClipError.busy.localizedDescription; return }
         guard app.hasPairingFile else { error = WebClipError.noPairing.localizedDescription; return }
+        guard app.vpnUp else { error = "请先连接 LocalDevVPN，再返回此页面。"; return }
         guard WebClipSpec.supportsTesting(on: ProcessInfo.processInfo.operatingSystemVersion) else {
             error = WebClipError.unsupportedOS.localizedDescription; return
         }

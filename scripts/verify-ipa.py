@@ -12,5 +12,8 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
     assert archive.getinfo(root + info['CFBundleExecutable']).file_size > 0
     assert not any('/_CodeSignature/' in name for name in archive.namelist())
     assert root + 'embedded.mobileprovision' not in archive.namelist()
+    assert archive.getinfo(root + 'zh-Hans.lproj/Localizable.strings').file_size > 0
+    assert archive.getinfo(root + 'en.lproj/Localizable.strings').file_size > 0
+    assert archive.getinfo(root + 'zh-Hans.lproj/InfoPlist.strings').file_size > 0
     assert archive.testzip() is None
 print('Unsigned IPA structure verified; physical-device behaviour remains untested.')

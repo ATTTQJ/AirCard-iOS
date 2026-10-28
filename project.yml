@@ -46,7 +46,27 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.atttqj.aircard.webclip.tests
 
+  AirCard-WebClipUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: ui-tests
+    dependencies:
+      - target: AirCard-iOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.atttqj.aircard.webclip.uitests
+        TEST_TARGET_NAME: AirCard-iOS
+
 schemes:
+  AirCard-WebClip-UI:
+    build:
+      targets:
+        AirCard-iOS: all
+    test:
+      targets:
+        - AirCard-WebClipUITests
   AirCard-iOS:
     build:
       targets:

@@ -59,3 +59,34 @@ jobs:
           path: build-ipa.log
           if-no-files-found: ignore
           retention-days: 7
+
+  ui-smoke:
+    name: Check Chinese UI and WebClip entry
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - name: Test navigation on simulator without device writes
+        run: |
+          mkdir -p build
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import sys,json; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
+          set -o pipefail
+          xcodebuild test -project AirCard-iOS.xcodeproj -scheme AirCard-WebClip-UI -destination "platform=iOS Simulator,id=$DEVICE_ID" -resultBundlePath build/WebClipUI.xcresult CODE_SIGNING_ALLOWED=NO 2>&1 | tee build/ui-test.log
+      - name: Export screen captures
+        if: always()
+        run: |
+          if [ -d build/WebClipUI.xcresult ]; then
+            xcrun xcresulttool export attachments --path build/WebClipUI.xcresult --output-path build/ui-screenshots
+          fi
+      - name: Upload UI verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebClip-UI-check-${{ github.run_number }}
+          path: |
+            build/ui-screenshots
+            build/ui-test.log
+            build/WebClipUI.xcresult
+          retention-days: 14

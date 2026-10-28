@@ -63,7 +63,7 @@ enum WebClipError: LocalizedError {
         case .invalidTitle: return "图标名称不能超过 80 个字符，也不能包含换行或控制字符。"
         case .invalidImage: return "无法读取图标，请重新选择一张有效图片。"
         case .unsupportedOS: return "此实验功能暂时仅对 iOS 27.0.1 开放。"
-        case .noPairing: return "请先在 Pairing 页面完成本机配对。"
+        case .noPairing: return "请先到首页完成本机配对。"
         case .busy: return "另一项设备操作仍在进行，请等待结束。"
         case .transport(let message): return message
         }

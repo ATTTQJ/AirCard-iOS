@@ -40,7 +40,7 @@ struct CryptoDonationRow: View {
                 Image(systemName: icon)
                     .foregroundStyle(iconColor)
                     .font(.subheadline.bold())
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.subheadline.bold())
                 Spacer()
                 Button {
@@ -58,7 +58,7 @@ struct CryptoDonationRow: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: isCopied ? "checkmark" : "doc.on.doc.fill")
-                        Text(isCopied ? "Copied!" : "Copy")
+                        Text(LocalizedStringKey(isCopied ? "Copied!" : "Copy"))
                     }
                     .font(.caption.bold())
                     .foregroundStyle(isCopied ? .green : .blue)
@@ -320,7 +320,7 @@ struct CreditsSheet: View {
                     }
                 }
             }
-            .navigationTitle(selectedTab == 0 ? "Credits" : "Donate & Support")
+            .navigationTitle(LocalizedStringKey(selectedTab == 0 ? "Credits" : "Donate & Support"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -710,7 +710,7 @@ struct CompactLogView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -742,7 +742,7 @@ struct CompactLogView: View {
                     HStack(spacing: 4) {
                         Image(systemName: copied ? "checkmark" : "doc.on.doc")
                             .font(.system(size: 11, weight: .bold))
-                        Text(copied ? "Copied" : "Copy")
+                        Text(LocalizedStringKey(copied ? "Copied" : "Copy"))
                             .font(.system(size: 11, weight: .bold))
                     }
                     .foregroundStyle(copied ? .green : .blue)
@@ -834,7 +834,7 @@ struct DocumentPickerView: UIViewControllerRepresentable {
 
 struct ContentView: View {
     @EnvironmentObject var vm: AppViewModel
-    @AppStorage("aircard.dont_show_support_on_launch") private var dontShowSupportOnLaunch: Bool = false
+    @AppStorage("aircard.dont_show_support_on_launch") private var dontShowSupportOnLaunch: Bool = true
     @State private var showSupportPopup: Bool = false
 
     var body: some View {
@@ -842,6 +842,10 @@ struct ContentView: View {
             PairingTab()
                 .tabItem { Label("Pairing", systemImage: "antenna.radiowaves.left.and.right") }
                 .tag(AppTab.pairing)
+
+            WebClipView()
+                .tabItem { Label("图标主题", systemImage: "square.grid.2x2.fill") }
+                .tag(AppTab.webClips)
 
             WalletCardsTab()
                 .tabItem { Label("Wallet Cards", systemImage: "creditcard.fill") }
@@ -854,10 +858,6 @@ struct ContentView: View {
             TendiesView()
                 .tabItem { Label("Wallpapers", systemImage: "photo.stack.fill") }
                 .tag(AppTab.wallpapers)
-
-            WebClipView()
-                .tabItem { Label("图标主题", systemImage: "square.grid.2x2.fill") }
-                .tag(AppTab.webClips)
         }
         .disabled(vm.webClipIsRunning)
         .overlay {
@@ -906,6 +906,7 @@ struct ContentView: View {
 
 struct PairingTab: View {
     @EnvironmentObject var vm: AppViewModel
+    @AppStorage("aircard.language") private var language = "system"
     @State private var showDeleteConfirm = false
     @State private var showCredits = false
     @State private var showFilePicker = false
@@ -960,6 +961,30 @@ struct PairingTab: View {
                     .padding(.vertical, 4)
                 }
 
+                Section {
+                    Button { vm.selectedTab = .webClips } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "square.grid.2x2.fill")
+                                .font(.title).foregroundStyle(.blue)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("图标主题").font(.headline)
+                                Text("自选图片 · 桌面预览 · 单图标测试")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").foregroundStyle(.secondary)
+                        }.padding(.vertical, 6)
+                    }
+                    .accessibilityIdentifier("home.webclip")
+                }
+                Section("App Language") {
+                    Picker("Language", selection: $language) {
+                        Text("Follow System").tag("system")
+                        Text("简体中文").tag("zh-Hans")
+                        Text("English").tag("en")
+                    }
+                }
+
                 // Network / VPN Status
                 Section("Network") {
                     VPNStatusRow(vm: vm)
@@ -982,9 +1007,9 @@ struct PairingTab: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Not Paired")
                                     .font(.subheadline.bold())
-                                Text(isIOS27OrNewer
+                                Text(LocalizedStringKey(isIOS27OrNewer
                                      ? "Pair on this iPhone below or import a pairing file."
-                                     : "Import a pairing file from SideStore, iLoader, or PC below.")
+                                     : "Import a pairing file from SideStore, iLoader, or PC below."))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -1097,7 +1122,7 @@ struct PairingTab: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack(spacing: 8) {
                                     ProgressView().scaleEffect(0.85)
-                                    Text(vm.pairingStatus.isEmpty ? "Starting local pairing host…" : vm.pairingStatus)
+                                    Text(LocalizedStringKey(vm.pairingStatus.isEmpty ? "Starting local pairing host…" : vm.pairingStatus))
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                 }
@@ -1164,7 +1189,7 @@ struct PairingTab: View {
                         } else {
                             VStack(spacing: 12) {
                                 if !vm.pairingStatus.isEmpty && vm.pairingStatus != "idle" {
-                                    Text(vm.pairingStatus)
+                                    Text(LocalizedStringKey(vm.pairingStatus))
                                         .font(.subheadline.weight(.medium))
                                         .foregroundStyle(
                                             vm.pairingStatus.contains("✅") ? .green :
@@ -1182,7 +1207,7 @@ struct PairingTab: View {
                                         Spacer()
                                         Image(systemName: "antenna.radiowaves.left.and.right")
                                             .font(.body.weight(.semibold))
-                                        Text(vm.hasPairingFile ? "Re-Pair This iPhone" : "Pair This iPhone")
+                                        Text(LocalizedStringKey(vm.hasPairingFile ? "Re-Pair This iPhone" : "Pair This iPhone"))
                                             .font(.headline)
                                         Spacer()
                                     }
@@ -1199,7 +1224,7 @@ struct PairingTab: View {
                 if !vm.log.isEmpty {
                     Section {
                         CompactLogView(
-                            title: "Activity Log (\(vm.log.count) lines)",
+                            title: "Activity Log",
                             lines: vm.log,
                             onClear: { vm.log.removeAll() }
                         )
@@ -1278,11 +1303,11 @@ struct VPNStatusRow: View {
                     .font(.title3)
                     .foregroundStyle(vm.vpnUp ? .green : .orange)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(vm.vpnUp ? "Loopback VPN Active" : "Loopback VPN Not Detected")
+                    Text(LocalizedStringKey(vm.vpnUp ? "Loopback VPN Active" : "Loopback VPN Not Detected"))
                         .font(.subheadline.bold())
-                    Text(vm.vpnUp
+                    Text(LocalizedStringKey(vm.vpnUp
                          ? "RSD tunnel ready — exploit will connect."
-                         : "Connect LocalDevVPN before running flashes.")
+                         : "Connect LocalDevVPN before running flashes."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -1296,7 +1321,7 @@ struct VPNStatusRow: View {
                         "1. Open LocalDevVPN app and tap Connect.",
                         "2. Return to AirCard-iOS — status indicator turns green."
                     ], id: \.self) { step in
-                        Text(step)
+                        Text(LocalizedStringKey(step))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -1612,7 +1637,7 @@ struct WalletCardsTab: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: vm.isScanningCards ? "stop.circle.fill" : "wave.3.left.circle")
-                            Text(vm.isScanningCards ? "Stop Scan" : "Scan Cards")
+                            Text(LocalizedStringKey(vm.isScanningCards ? "Stop Scan" : "Scan Cards"))
                         }
                         .font(.subheadline.bold())
                         .foregroundStyle(vm.isScanningCards ? .red : .blue)
@@ -1791,7 +1816,7 @@ struct WalletCardsTab: View {
                         .controlSize(.small)
                     }
                 }
-                Text(vm.scanStatusText)
+                Text(LocalizedStringKey(vm.scanStatusText))
                     .font(.caption)
                     .foregroundStyle(vm.scanStatusText.contains("stopped") || vm.scanStatusText.contains("error") ? .orange : .secondary)
             }
@@ -1836,7 +1861,7 @@ struct WalletCardsTab: View {
 
             if !vm.cardFlashLog.isEmpty {
                 CompactLogView(
-                    title: "Flash Log (\(vm.cardFlashLog.count) lines)",
+                    title: "Flash Log",
                     lines: vm.cardFlashLog,
                     onClear: { vm.cardFlashLog.removeAll() }
                 )
@@ -1927,7 +1952,7 @@ struct WalletCardsTab: View {
                     HStack(spacing: 6) {
                         Spacer()
                         Image(systemName: vm.isScanningCards ? "stop.circle.fill" : "wave.3.left.circle")
-                        Text(vm.isScanningCards ? "Stop Scan" : "Scan Cards")
+                        Text(LocalizedStringKey(vm.isScanningCards ? "Stop Scan" : "Scan Cards"))
                         Spacer()
                     }
                     .font(.headline)
@@ -2014,7 +2039,7 @@ struct PasscodeThemeTab: View {
                 Section {
                     Picker("Mode", selection: $vm.passcodeMode) {
                         ForEach(CreatorMode.allCases) { mode in
-                            Text(mode.rawValue).tag(mode)
+                            Text(LocalizedStringKey(mode.rawValue)).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -2030,7 +2055,7 @@ struct PasscodeThemeTab: View {
                 if !vm.passthmFlashLog.isEmpty {
                     Section {
                         CompactLogView(
-                            title: "Flash Log (\(vm.passthmFlashLog.count) lines)",
+                            title: "Flash Log",
                             lines: vm.passthmFlashLog,
                             onClear: { vm.passthmFlashLog.removeAll() }
                         )
@@ -2092,7 +2117,7 @@ struct ApplyThemeSection: View {
                 Button {
                     showDocumentPicker = true
                 } label: {
-                    Label(vm.loadedTheme == nil ? "Choose .passthm from Files…" : "Change .passthm…",
+                    Label(LocalizedStringKey(vm.loadedTheme == nil ? "Choose .passthm from Files…" : "Change .passthm…"),
                           systemImage: "doc.badge.plus")
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
@@ -2254,7 +2279,7 @@ struct PasscodeTargetSection: View {
                         .foregroundColor(.secondary)
                     Picker("System Language", selection: $vm.passcodeLanguageTarget) {
                         ForEach(PasscodeLanguageTarget.allCases) { item in
-                            Text(item.rawValue).tag(item)
+                            Text(LocalizedStringKey(item.rawValue)).tag(item)
                         }
                     }
                     .pickerStyle(.menu)
@@ -2270,7 +2295,7 @@ struct PasscodeTargetSection: View {
                         .foregroundColor(.secondary)
                     Picker("Font Weight / Style", selection: $vm.passcodeBoldTarget) {
                         ForEach(PasscodeBoldTarget.allCases) { item in
-                            Text(item.rawValue).tag(item)
+                            Text(LocalizedStringKey(item.rawValue)).tag(item)
                         }
                     }
                     .pickerStyle(.menu)
@@ -2321,7 +2346,7 @@ struct ThemeCreatorSection: View {
         Section("Slice Mode") {
             Picker("", selection: $vm.sliceMode) {
                 ForEach(SliceMode.allCases) { m in
-                    Text(m.rawValue).tag(m)
+                    Text(LocalizedStringKey(m.rawValue)).tag(m)
                 }
             }
             .pickerStyle(.segmented)
@@ -2390,7 +2415,7 @@ struct ThemeCreatorSection: View {
                 Button {
                     showPosterSourceDialog = true
                 } label: {
-                    Label(vm.posterImage == nil ? "Select Photo for Keypad…" : "Change Photo…",
+                    Label(LocalizedStringKey(vm.posterImage == nil ? "Select Photo for Keypad…" : "Change Photo…"),
                           systemImage: "photo")
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
@@ -2448,7 +2473,7 @@ struct ThemeCreatorSection: View {
                             vm.updatePosterSlicing()
                         }
 
-                        Text(vm.maskToCircles ? "Artwork is clipped into individual circular button icons." : "Seamless artwork spans across dialer keys without circular cuts (Adobe Dog style).")
+                        Text(LocalizedStringKey(vm.maskToCircles ? "Artwork is clipped into individual circular button icons." : "Seamless artwork spans across dialer keys without circular cuts (Adobe Dog style)."))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
