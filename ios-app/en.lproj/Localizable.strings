@@ -307,3 +307,7 @@
 "图标名称不能超过 80 个字符，也不能包含换行或控制字符。" = "Icon names must be at most 80 characters, with no line breaks or control characters.";
 "无法读取图标，请重新选择一张有效图片。" = "Cannot read this icon. Choose another valid image.";
 "此实验功能暂时仅对 iOS 27.0.1 开放。" = "This experiment is restricted to iOS 27.0.1.";
+"目标 IP 的隧道路由已检测（设备服务未验证）" = "Tunnel route detected (device service unverified)";
+"设备连接失败，未开始写入" = "Device connection failed; writing has not started";
+"请检查本地 VPN、目标 IP 和本机配对文件，再手动重试。" = "Check the local VPN, target IP and pairing file, then retry manually.";
+"未能连接设备服务，尚未开始写入 WebClip。请关闭其他 VPN，连接 LocalDevVPN，再到首页检查目标 IP 和配对文件。无需仅为此连接 Wi-Fi。备用地址的超时不代表检测到了 Wi-Fi；原始错误已保存在写入记录中。" = "Could not connect to device services; WebClip writing has not started. Disconnect other VPNs, connect LocalDevVPN, and check the target IP and pairing file on Home. Wi-Fi is not itself a prerequisite. A fallback address timeout does not indicate Wi-Fi detection. The original error is saved in write history.";

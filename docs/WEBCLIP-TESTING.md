@@ -28,6 +28,14 @@ WebClip 主操作按钮在 iOS 26 及以上采用系统 `glassProminent` 样式�
 - 按钮禁用时显示具体原因。历史记录和移除说明从页面单独打开。
 - CI 额外用模拟器验证两个入口、中文标签、禁用按钮和记录页，保存截图；模拟器测试不执行设备写入。
 
+## 连接超时（1.3.4）
+
+`Device connection failed` 表示核心库在打开文件服务和写入之前未能建立隧道。
+末尾 `172.16.0.1` 是备用候选地址，不是检测到的 Wi-Fi 地址；完整原因需结合日志和 VPN 配置判断。
+页面现在检查目标地址的隧道路由，不再仅凭存在任意 VPN 接口打绿勾；绿勾仍不代表设备服务已验证。
+只有明确发生在写入前的连接错误才允许手动重试；未知错误和可能部分写入的错误继续锁定重复操作。
+原始错误保存在记录中。此版本改善检测、提示和重试，不保证修复 VPN 配置或设备配对故障。
+
 ## 首次测试
 
 1. 先制作完整设备备份，确保照片和重要聊天记录另有可用副本。
@@ -64,7 +72,7 @@ GitHub Actions 在 macOS 上运行 XcodeGen，检查 payload/path/version gate�
 ```sh
 brew install xcodegen
 xcodegen generate
-swiftc ios-app/WebClipSpec.swift scripts/check-webclip.swift -o /tmp/check-webclip
+swiftc ios-app/WebClipSpec.swift ios-app/NetworkStatus.swift scripts/check-webclip.swift -o /tmp/check-webclip
 /tmp/check-webclip
 bash build-ipa.sh Release
 ```

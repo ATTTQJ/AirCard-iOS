@@ -30,7 +30,7 @@ jobs:
       - name: Check WebClip payload and isolation
         run: |
           mkdir -p build
-          swiftc ios-app/WebClipSpec.swift scripts/check-webclip.swift -o build/check-webclip
+          swiftc ios-app/WebClipSpec.swift ios-app/NetworkStatus.swift scripts/check-webclip.swift -o build/check-webclip
           build/check-webclip
       - name: Generate Xcode project
         run: xcodegen generate

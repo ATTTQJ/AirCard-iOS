@@ -15,7 +15,6 @@ struct WebClipView: View {
     @State private var showRefreshConfirm = false
     @State private var showHistory = false
     @State private var showHelp = false
-    @State private var lastSubmittedBundle: String?
     @FocusState private var editing: Bool
 
     private var supported: Bool {
@@ -35,7 +34,7 @@ struct WebClipView: View {
         if png == nil { return "先选择一张图片作为图标。" }
         if bundleID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return "填写要打开的 App 的 Bundle ID。" }
         if spec == nil { return "请检查 App 标识和图标名称。" }
-        if lastSubmittedBundle == spec?.bundleID { return "此 App 本次已尝试写入，请先查看桌面和写入记录。" }
+        if model.blockedBundleID != nil && model.blockedBundleID == spec?.bundleID { return "此 App 本次已尝试写入，请先查看桌面和写入记录。" }
         return nil
     }
 
@@ -96,7 +95,6 @@ struct WebClipView: View {
             .confirmationDialog("新增测试图标？", isPresented: $showConfirm, titleVisibility: .visible) {
                 Button("确认新增一个图标") {
                     guard blockedReason == nil, let png, let spec else { return }
-                    lastSubmittedBundle = spec.bundleID
                     Task { await model.install(bundleID: spec.bundleID, title: spec.title, png: png, app: app) }
                 }
                 Button("取消", role: .cancel) {}
@@ -188,7 +186,7 @@ struct WebClipView: View {
         Section {
             readiness("系统为 iOS 27.0.1", ready: supported)
             readiness("已导入本机配对文件", ready: app.hasPairingFile)
-            readiness("已检测到本地 VPN", ready: app.vpnUp)
+            readiness("目标 IP 的隧道路由已检测（设备服务未验证）", ready: app.vpnUp)
             if !app.hasPairingFile || !app.vpnUp {
                 Button("前往首页设置配对与 VPN") { editing = false; app.selectedTab = .pairing }
             }
@@ -246,6 +244,9 @@ struct WebClipView: View {
                         Text(LocalizedStringKey(receipt.status)).font(.subheadline)
                         Text(receipt.createdAt, format: .dateTime.year().month().day().hour().minute()).font(.caption).foregroundStyle(.secondary)
                         DisclosureGroup("排查信息") {
+                            if let diagnostic = receipt.diagnostic {
+                                Text(diagnostic).font(.caption).textSelection(.enabled)
+                            }
                             Text(receipt.spec.targetPath).font(.system(.caption2, design: .monospaced)).textSelection(.enabled)
                         }
                     }

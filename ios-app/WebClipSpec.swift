@@ -75,4 +75,13 @@ struct WebClipReceipt: Codable, Identifiable {
     let spec: WebClipSpec
     let createdAt: Date
     var status: String
+    var diagnostic: String? = nil
+}
+
+/// Only these exact core errors originate before AFC or filesystem operations.
+/// Unknown/partial-write errors must keep the duplicate-write guard in place.
+enum WebClipConnectionFailure {
+    static func isBeforeWrite(_ message: String) -> Bool {
+        message.hasPrefix("Device connection failed:") || message.hasPrefix("Pairing file is invalid:")
+    }
 }

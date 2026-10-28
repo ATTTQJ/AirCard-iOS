@@ -53,13 +53,14 @@ enum NetworkStatus {
     }
 
     private static func isLoopbackTunnelUp(in ifs: [Interface], deviceIP: String) -> Bool {
-        if ifs.contains(where: { isTunnelInterface($0.name) }) {
-            return true
-        }
-        guard let target = ipv4Value(deviceIP) else {
-            return false
-        }
+        guard ipv4Value(deviceIP) != nil else { return false }
         if tunnelCarriesRoute(to: deviceIP, in: ifs) == true { return true }
+        return hasTunnelSubnet(in: ifs, deviceIP: deviceIP)
+    }
+
+    // A generic utun interface alone is not evidence of a route to this device.
+    static func hasTunnelSubnet(in ifs: [Interface], deviceIP: String) -> Bool {
+        guard let target = ipv4Value(deviceIP) else { return false }
         return ifs.contains { isTunnelInterface($0.name) && subnet($0, contains: target) }
     }
 

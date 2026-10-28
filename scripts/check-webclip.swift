@@ -32,6 +32,12 @@ struct WebClipChecks {
         let receipt = WebClipReceipt(spec: spec, createdAt: Date(), status: "pending")
         let decoded = try JSONDecoder().decode(WebClipReceipt.self, from: JSONEncoder().encode(receipt))
         require(decoded.spec == spec && decoded.status == "pending", "Receipt round trip failed")
+        require(WebClipConnectionFailure.isBeforeWrite("Device connection failed: 172.16.0.1:49152 timeout"), "Connection-stage failure must allow manual retry")
+        require(!WebClipConnectionFailure.isBeforeWrite("AFC write failed: Device connection failed:"), "Partial-write errors must stay guarded")
+        require(!WebClipConnectionFailure.isBeforeWrite("Unknown error"), "Unknown failures must stay guarded")
+        require(NetworkStatus.hasTunnelSubnet(in: [.init(name: "utun0", ipv4: "10.7.0.2", netmask: "255.255.255.0")], deviceIP: "10.7.0.1"), "Local tunnel subnet should be detected")
+        require(!NetworkStatus.hasTunnelSubnet(in: [.init(name: "utun0", ipv4: "10.9.0.2", netmask: "255.255.255.0")], deviceIP: "10.7.0.1"), "Unrelated VPN must not pass subnet check")
+        require(!NetworkStatus.hasTunnelSubnet(in: [.init(name: "en0", ipv4: "10.7.0.2", netmask: "255.255.255.0")], deviceIP: "10.7.0.1"), "Wi-Fi alone must not pass tunnel check")
         print("WebClip payload, path isolation, version gate, and receipt checks passed.")
     }
 }

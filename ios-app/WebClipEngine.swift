@@ -78,6 +78,7 @@ final class WebClipViewModel: ObservableObject {
     @Published var error: String?
     @Published var isRunning = false
     @Published var mayRefresh = false
+    @Published var blockedBundleID: String?
     private let storageKey = "atttqj.webclips.receipts.v1"
 
     init() {
@@ -99,12 +100,15 @@ final class WebClipViewModel: ObservableObject {
               app.tendiesFlashPhase != .running, app.pairingPhase != .pairing,
               !app.isDetectingContainer else { error = WebClipError.busy.localizedDescription; return }
         guard app.hasPairingFile else { error = WebClipError.noPairing.localizedDescription; return }
+        app.refreshNetworkStatus()
         guard app.vpnUp else { error = "请先连接 LocalDevVPN，再返回此页面。"; return }
         guard WebClipSpec.supportsTesting(on: ProcessInfo.processInfo.operatingSystemVersion) else {
             error = WebClipError.unsupportedOS.localizedDescription; return
         }
         do {
             let spec = try WebClipSpec(bundleID: bundleID, title: title)
+            guard blockedBundleID != spec.bundleID else { return }
+            blockedBundleID = spec.bundleID
             // Save the receipt BEFORE the write. A killed app must not lose the
             // identity of an operation which may already have changed the device.
             receipts.insert(WebClipReceipt(spec: spec, createdAt: Date(), status: "已开始，结果待确认"), at: 0)
@@ -128,16 +132,27 @@ final class WebClipViewModel: ObservableObject {
                 status = "写入接口已返回成功。请刷新桌面后检查图标；这不代表系统已识别或启动验证通过。"
                 mayRefresh = true
             } catch {
-                update(spec.id, status: "失败或结果不确定，请检查桌面")
-                status = "操作未完成，未自动重试。请保留记录并先检查桌面。"
-                self.error = error.localizedDescription
+                let detail = error.localizedDescription
+                if let failure = error as? WebClipError,
+                   case .transport(let message) = failure,
+                   WebClipConnectionFailure.isBeforeWrite(message) {
+                    blockedBundleID = nil
+                    update(spec.id, status: "设备连接失败，未开始写入", diagnostic: detail)
+                    status = "请检查本地 VPN、目标 IP 和本机配对文件，再手动重试。"
+                    self.error = "未能连接设备服务，尚未开始写入 WebClip。请关闭其他 VPN，连接 LocalDevVPN，再到首页检查目标 IP 和配对文件。无需仅为此连接 Wi-Fi。备用地址的超时不代表检测到了 Wi-Fi；原始错误已保存在写入记录中。"
+                } else {
+                    update(spec.id, status: "失败或结果不确定，请检查桌面", diagnostic: detail)
+                    status = "操作未完成，未自动重试。请保留记录并先检查桌面。"
+                    self.error = detail
+                }
             }
         } catch { self.error = error.localizedDescription }
     }
 
-    private func update(_ id: UUID, status: String) {
+    private func update(_ id: UUID, status: String, diagnostic: String? = nil) {
         if let index = receipts.firstIndex(where: { $0.id == id }) {
             receipts[index].status = status
+            receipts[index].diagnostic = diagnostic
             save()
         }
     }
