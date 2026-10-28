@@ -18,7 +18,7 @@ concurrency:
 jobs:
   native-core:
     name: Rebuild AirLift native core
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             rust-core/target
-          key: native-macos15-xcode26-${{ hashFiles('rust-core/Cargo.lock', 'rust-core/**/Cargo.toml') }}
+          key: native-macos15-${{ runner.arch }}-xcode26-${{ hashFiles('rust-core/Cargo.lock', 'rust-core/**/Cargo.toml') }}
       - name: Test native diagnostic classification
         run: |
           mkdir -p build
@@ -54,7 +54,7 @@ jobs:
 
   build:
     needs: native-core
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
