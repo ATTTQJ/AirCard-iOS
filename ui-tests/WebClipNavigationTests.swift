@@ -59,7 +59,10 @@ final class WebClipNavigationTests: XCTestCase {
 
     func testFullReportCanBeCopiedWithoutVPN() throws {
         let app = XCUIApplication()
-        let report = "目录验证测试\n" + String(repeating: "完整日志内容\n", count: 80) + "REPORT-END-MARKER"
+        // NSArgumentDomain parses unquoted multiline launch values at the first
+        // newline. A whitespace-free long fixture exercises the actual full-text
+        // view without silently truncating the test input before app launch.
+        let report = "目录验证测试：" + String(repeating: "完整日志内容", count: 80) + "REPORT-END-MARKER"
         app.launchArguments = ["-aircard.language", "zh-Hans", "-aircard.dont_show_support_on_launch", "YES", "-webclip.directoryReport", report]
         app.launch()
         app.tabBars.buttons["图标主题"].tap()
