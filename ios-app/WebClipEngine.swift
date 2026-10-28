@@ -79,7 +79,7 @@ enum WebClipEngine {
                 let exact = object?["exactBytesRecovered"] as? Bool == true
                 let cleaned = object?["cleanupComplete"] as? Bool == true
                 let verdict = rc == 0 && exact ? "目录字节读回验证通过；尚未验证书签注册。" : "目录读回未确认；请停止新增图标并保留此报告。"
-                let cleanup = cleaned ? "核心库报告临时文件清理完成。" : "临时文件清理未确认，请保留报告排查。"
+                let cleanup = cleaned ? "核心库报告暂存区清理完成；目标目录残留未核查。" : "临时文件清理未确认，请保留报告排查。"
                 let report = ([verdict, cleanup, json ?? error ?? "未返回结构化结果"] + buffer.lines).joined(separator: "\n")
                 continuation.resume(returning: report)
             }

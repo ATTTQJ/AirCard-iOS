@@ -13,6 +13,7 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
     assert sdk.startswith('iphoneos') and int(sdk.removeprefix('iphoneos').split('.')[0]) >= 26, sdk
     assert info.get('UIDesignRequiresCompatibility', False) is False, 'Legacy design compatibility must be disabled'
     assert archive.getinfo(root + info['CFBundleExecutable']).file_size > 0
+    assert b'webclip-diagnostics-v2' in archive.read(root + info['CFBundleExecutable']), 'IPA contains an outdated native core'
     assert not any('/_CodeSignature/' in name for name in archive.namelist())
     assert root + 'embedded.mobileprovision' not in archive.namelist()
     assert archive.getinfo(root + 'zh-Hans.lproj/Localizable.strings').file_size > 0

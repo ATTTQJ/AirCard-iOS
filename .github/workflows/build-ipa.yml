@@ -16,11 +16,54 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  native-core:
+    name: Rebuild AirLift native core
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust-core/target
+          key: native-macos15-xcode26-${{ hashFiles('rust-core/Cargo.lock', 'rust-core/**/Cargo.toml') }}
+      - name: Test native diagnostic classification
+        run: |
+          mkdir -p build
+          source "$HOME/.cargo/env"
+          set -o pipefail
+          cargo test --locked --manifest-path rust-core/Cargo.toml --lib 2>&1 | tee build/native-tests.log
+      - name: Rebuild device and simulator frameworks
+        run: |
+          mkdir -p build
+          set -o pipefail
+          bash build-ios.sh 2>&1 | tee build/native-core.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AirliftFFI-native-core
+          path: AirliftFFI.xcframework/
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-core-log
+          path: build/native-*.log
+          retention-days: 7
+
   build:
+    needs: native-core
     runs-on: macos-15
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - name: Replace checked-in framework with rebuilt core
+        run: rm -rf AirliftFFI.xcframework
+      - uses: actions/download-artifact@v4
+        with:
+          name: AirliftFFI-native-core
+          path: AirliftFFI.xcframework
       - name: Inspect Xcode toolchain
         run: |
           xcodebuild -version
@@ -64,11 +107,17 @@ jobs:
           retention-days: 7
 
   ui-smoke:
+    needs: native-core
     name: Check Chinese UI and WebClip entry
     runs-on: macos-15
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - run: rm -rf AirliftFFI.xcframework
+      - uses: actions/download-artifact@v4
+        with:
+          name: AirliftFFI-native-core
+          path: AirliftFFI.xcframework
       - run: brew install xcodegen
       - run: xcodegen generate
       - name: Test navigation on simulator without device writes
