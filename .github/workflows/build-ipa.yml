@@ -109,7 +109,7 @@ jobs:
   ui-smoke:
     needs: native-core
     name: Check Chinese UI and WebClip entry
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4

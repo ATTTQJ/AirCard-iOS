@@ -78,7 +78,17 @@ enum WebClipEngine {
                     .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
                 let exact = object?["exactBytesRecovered"] as? Bool == true
                 let cleaned = object?["cleanupComplete"] as? Bool == true
-                let verdict = rc == 0 && exact ? "目录字节读回验证通过；尚未验证书签注册。" : "目录读回未确认；请停止新增图标并保留此报告。"
+                let verdict: String
+                switch object?["failureStage"] as? String {
+                case "asset-manifest-not-accepted":
+                    verdict = "服务器清单未接纳全部测试文件；已停止搬运，请保留此报告。"
+                case "link-relocation-unconfirmed":
+                    verdict = "第一步链接搬运未确认；已停止后续写入，请保留此报告。"
+                case "payload-relocation-unconfirmed":
+                    verdict = "第二步测试文件搬运未确认；已停止取回操作，请保留此报告。"
+                default:
+                    verdict = rc == 0 && exact ? "目录字节读回验证通过；尚未验证书签注册。" : "目录读回未确认；请停止新增图标并保留此报告。"
+                }
                 let cleanup = cleaned ? "核心库报告暂存区清理完成；目标目录残留未核查。" : "临时文件清理未确认，请保留报告排查。"
                 let report = ([verdict, cleanup, json ?? error ?? "未返回结构化结果"] + buffer.lines).joined(separator: "\n")
                 continuation.resume(returning: report)
