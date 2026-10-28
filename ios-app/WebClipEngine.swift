@@ -49,6 +49,43 @@ enum WebClipEngine {
         return png
     }
 
+    /// Explicit diagnostic, separate from icon installation. Writes a random canary,
+    /// recovers its exact bytes, and asks the existing core to clean up afterwards.
+    static func verifyDirectory(pairingPath: String) async throws -> String {
+        guard WebClipSpec.supportsTesting(on: ProcessInfo.processInfo.operatingSystemVersion) else {
+            throw WebClipError.unsupportedOS
+        }
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
+            queue.async {
+                let buffer = WebClipLogBuffer()
+                var jsonPointer: UnsafeMutablePointer<CChar>?
+                var errorPointer: UnsafeMutablePointer<CChar>?
+                let rc = pairingPath.withCString { pairing in
+                    WebClipSpec.targetParent.withCString { target in
+                        al_exploit_run(pairing, target, { context, message in
+                            guard let context, let message else { return }
+                            Unmanaged<WebClipLogBuffer>.fromOpaque(context).takeUnretainedValue().append(String(cString: message))
+                        }, Unmanaged.passUnretained(buffer).toOpaque(), &jsonPointer, &errorPointer)
+                    }
+                }
+                let json = jsonPointer.map { String(cString: $0) }
+                let error = errorPointer.map { String(cString: $0) }
+                if let pointer = jsonPointer { al_string_free(pointer) }
+                if let pointer = errorPointer { al_string_free(pointer) }
+                // Some core builds return JSON even if its ok field is false.
+                // The exact readback fields, not rc alone, determine the verdict.
+                let object = json.flatMap { $0.data(using: .utf8) }
+                    .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+                let exact = object?["exactBytesRecovered"] as? Bool == true
+                let cleaned = object?["cleanupComplete"] as? Bool == true
+                let verdict = rc == 0 && exact ? "目录字节读回验证通过；尚未验证书签注册。" : "目录读回未确认；请停止新增图标并保留此报告。"
+                let cleanup = cleaned ? "核心库报告临时文件清理完成。" : "临时文件清理未确认，请保留报告排查。"
+                let report = ([verdict, cleanup, json ?? error ?? "未返回结构化结果"] + buffer.lines).joined(separator: "\n")
+                continuation.resume(returning: report)
+            }
+        }
+    }
+
     static func install(spec: WebClipSpec, png: Data, pairingPath: String) async throws -> [String] {
         // Validate again at the device boundary, independent of the UI.
         guard WebClipSpec.supportsTesting(on: ProcessInfo.processInfo.operatingSystemVersion) else {
@@ -104,6 +141,7 @@ final class WebClipViewModel: ObservableObject {
     @Published var isRunning = false
     @Published var mayRefresh = false
     @Published var blockedBundleID: String?
+    @Published var directoryReport = UserDefaults.standard.string(forKey: "webclip.directoryReport")
     private let storageKey = "atttqj.webclips.receipts.v1"
 
     init() {
@@ -170,6 +208,29 @@ final class WebClipViewModel: ObservableObject {
                     self.error = detail
                 }
             }
+        } catch { self.error = error.localizedDescription }
+    }
+
+    func verifyDirectory(app: AppViewModel) async {
+        guard !isRunning, !app.webClipIsRunning,
+              app.cardFlashPhase != .running, app.passthmFlashPhase != .running,
+              app.tendiesFlashPhase != .running, app.pairingPhase != .pairing,
+              !app.isDetectingContainer else { error = WebClipError.busy.localizedDescription; return }
+        app.refreshNetworkStatus()
+        guard app.hasPairingFile, app.vpnUp else { error = "请先完成配对并连接 LocalDevVPN。"; return }
+        isRunning = true
+        app.webClipIsRunning = true
+        let previousIdle = UIApplication.shared.isIdleTimerDisabled
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer {
+            isRunning = false
+            app.webClipIsRunning = false
+            UIApplication.shared.isIdleTimerDisabled = previousIdle
+        }
+        do {
+            app.syncTargetHostsToRust()
+            directoryReport = try await WebClipEngine.verifyDirectory(pairingPath: PairingController.pairingFilePath())
+            UserDefaults.standard.set(directoryReport, forKey: "webclip.directoryReport")
         } catch { self.error = error.localizedDescription }
     }
 

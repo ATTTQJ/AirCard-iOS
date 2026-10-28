@@ -25,6 +25,14 @@ final class WebClipNavigationTests: XCTestCase {
         }
         XCTAssertTrue(bundleField.exists && bundleField.isHittable, "App identifier must be reachable by scrolling")
         capture(app, "03-WebClip-target-and-readiness")
+        let verify = app.buttons["webclip.verifyDirectory"]
+        for _ in 0..<6 {
+            if verify.exists && verify.isHittable { break }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(verify.exists && verify.isHittable)
+        XCTAssertFalse(verify.isEnabled, "Directory writes must also require a supported paired device")
+        capture(app, "04-Directory-diagnostics")
         app.buttons["webclip.history"].tap()
         XCTAssertTrue(app.staticTexts["暂无写入记录"].waitForExistence(timeout: 5))
         capture(app, "04-WebClip-history")

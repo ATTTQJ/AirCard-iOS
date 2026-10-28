@@ -312,3 +312,11 @@
 "请检查本地 VPN、目标 IP 和本机配对文件，再手动重试。" = "Check the local VPN, target IP and pairing file, then retry manually.";
 "未能连接设备服务，尚未开始写入 WebClip。请关闭其他 VPN，连接 LocalDevVPN，再到首页检查目标 IP 和配对文件。无需仅为此连接 Wi-Fi。备用地址的超时不代表检测到了 Wi-Fi；原始错误已保存在写入记录中。" = "Could not connect to device services; WebClip writing has not started. Disconnect other VPNs, connect LocalDevVPN, and check the target IP and pairing file on Home. Wi-Fi is not itself a prerequisite. A fallback address timeout does not indicate Wi-Fi detection. The original error is saved in write history.";
 "导出诊断日志" = "Export diagnostic log";
+"目录诊断" = "Directory diagnostics";
+"重启后仍无图标时，先验证目录是否真正可写。此验证不能确认系统会识别书签。" = "If no icon appears after restarting, verify directory writes first. This test does not verify bookmark registration.";
+"验证 WebClips 目录" = "Verify WebClips directory";
+"导出目录验证报告" = "Export directory verification report";
+"验证目录写入与读回？" = "Verify directory write and readback?";
+"开始目录验证" = "Start directory verification";
+"将在 WebClips 目录创建随机测试文件，读回核对字节后尝试清理。若操作中断可能残留测试文件。请保持应用在前台；结果会保存在目录验证报告中。" = "A random test file will be created in WebClips, read back and checked, then cleanup will be attempted. Interruption may leave a test file behind. Keep the app open; results are saved in the directory report.";
+"请先完成配对并连接 LocalDevVPN。" = "Complete pairing and connect LocalDevVPN first.";

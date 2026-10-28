@@ -34,7 +34,8 @@ WebClip 主操作按钮在 iOS 26 及以上采用系统 `glassProminent` 样式�
 GoldenNugget 的对应功能通过 HomeDomain 恢复流程投放，不能用它的成功案例证明本分支 AirLift 传输可行。
 当前 AirLift 文件夹接口不读回验证目标目录，不能判断目录实际落地或被 SpringBoard 识别。
 本版保留每次 AirLift 回调日志；在「写入记录 → 排查信息」查看或手动导出。先查看既有操作日志，不要连续尝试写入。
-后续需解决目标目录读回验证或确认可用的安装／注册路径，才能宣布实机功能可用。
+新增「目录诊断」调用上游 canary 接口：仅对固定 WebClips 目录创建随机测试文件，读回核对 exactBytesRecovered，并单独报告 cleanupComplete。它能验证目录字节往返，不能证明 Info.plist/icon.png 实际落地或已注册。只有用户明确点击验证才执行。
+后续仍需确认可用的书签投放／注册路径，才能宣布实机功能可用。
 
 ## 连接超时（1.3.4）
 

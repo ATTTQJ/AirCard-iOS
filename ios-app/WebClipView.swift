@@ -15,6 +15,7 @@ struct WebClipView: View {
     @State private var showRefreshConfirm = false
     @State private var showHistory = false
     @State private var showHelp = false
+    @State private var showDirectoryConfirm = false
     @FocusState private var editing: Bool
 
     private var supported: Bool {
@@ -45,6 +46,17 @@ struct WebClipView: View {
                 imageSection
                 targetSection
                 readinessSection
+                Section("目录诊断") {
+                    Text("重启后仍无图标时，先验证目录是否真正可写。此验证不能确认系统会识别书签。")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Button("验证 WebClips 目录") { showDirectoryConfirm = true }
+                        .accessibilityIdentifier("webclip.verifyDirectory")
+                        .disabled(!supported || !app.hasPairingFile || !app.vpnUp || model.isRunning || otherOperationRunning)
+                    if let report = model.directoryReport {
+                        Text(String(report.prefix(180))).font(.caption).textSelection(.enabled)
+                        ShareLink(item: report) { Label("导出目录验证报告", systemImage: "square.and.arrow.up") }
+                    }
+                }
                 if model.mayRefresh {
                     Section("下一步") {
                         Label("写入接口返回成功，桌面效果待检查", systemImage: "checkmark.circle")
@@ -91,6 +103,12 @@ struct WebClipView: View {
                     guard size <= 25 * 1024 * 1024 else { throw WebClipError.invalidImage }
                     png = try WebClipEngine.iconPNG(from: Data(contentsOf: url))
                 } catch { model.error = error.localizedDescription }
+            }
+            .confirmationDialog("验证目录写入与读回？", isPresented: $showDirectoryConfirm, titleVisibility: .visible) {
+                Button("开始目录验证") { Task { await model.verifyDirectory(app: app) } }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("将在 WebClips 目录创建随机测试文件，读回核对字节后尝试清理。若操作中断可能残留测试文件。请保持应用在前台；结果会保存在目录验证报告中。")
             }
             .confirmationDialog("新增测试图标？", isPresented: $showConfirm, titleVisibility: .visible) {
                 Button("确认新增一个图标") {
