@@ -3,6 +3,26 @@ import Combine
 import UIKit
 import AirliftFFI
 
+private final class WebClipLogBuffer {
+    private let lock = NSLock()
+    private var entries: [String] = []
+    func append(_ line: String) {
+        lock.lock(); defer { lock.unlock() }
+        entries.append(line)
+        if entries.count > 1000 { entries.removeFirst() }
+    }
+    var lines: [String] {
+        lock.lock(); defer { lock.unlock() }
+        return entries
+    }
+}
+
+private struct WebClipAttemptFailure: LocalizedError {
+    let message: String
+    let lines: [String]
+    var errorDescription: String? { message }
+}
+
 /// Uses the existing AirCard transport. Never invokes backup/restore or writes a
 /// SpringBoard layout database. New UUID directories avoid replacing old clips.
 enum WebClipEngine {
@@ -29,7 +49,7 @@ enum WebClipEngine {
         return png
     }
 
-    static func install(spec: WebClipSpec, png: Data, pairingPath: String) async throws {
+    static func install(spec: WebClipSpec, png: Data, pairingPath: String) async throws -> [String] {
         // Validate again at the device boundary, independent of the UI.
         guard WebClipSpec.supportsTesting(on: ProcessInfo.processInfo.operatingSystemVersion) else {
             throw WebClipError.unsupportedOS
@@ -38,7 +58,7 @@ enum WebClipEngine {
         guard FileManager.default.fileExists(atPath: pairingPath) else { throw WebClipError.noPairing }
         guard UIImage(data: png) != nil, png.count < 1024 * 1024 else { throw WebClipError.invalidImage }
 
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[String], Error>) in
             queue.async {
                 do {
                     let stage = FileManager.default.temporaryDirectory
@@ -47,12 +67,17 @@ enum WebClipEngine {
                     defer { try? FileManager.default.removeItem(at: stage) }
                     try spec.plistData().write(to: stage.appendingPathComponent("Info.plist"), options: .atomic)
                     try png.write(to: stage.appendingPathComponent("icon.png"), options: .atomic)
+                    let logBuffer = WebClipLogBuffer()
                     var errorPointer: UnsafeMutablePointer<CChar>?
                     let rc = pairingPath.withCString { pairing in
                         stage.path.withCString { source in
                             WebClipSpec.targetParent.withCString { parent in
                                 spec.folderName.withCString { destination in
-                                    al_exploit_inject_folder(pairing, source, parent, destination, nil, nil, &errorPointer)
+                                    al_exploit_inject_folder(pairing, source, parent, destination, { context, message in
+                                        guard let context, let message else { return }
+                                        Unmanaged<WebClipLogBuffer>.fromOpaque(context).takeUnretainedValue()
+                                            .append(String(cString: message))
+                                    }, Unmanaged.passUnretained(logBuffer).toOpaque(), &errorPointer)
                                 }
                             }
                         }
@@ -60,9 +85,9 @@ enum WebClipEngine {
                     let message = errorPointer.map { String(cString: $0) }
                     if let pointer = errorPointer { al_string_free(pointer) }
                     guard rc == 0 else {
-                        throw WebClipError.transport(message ?? "AirLift 写入失败（代码 \(rc)）。可能留下部分书签文件，请先检查桌面。")
+                        throw WebClipAttemptFailure(message: message ?? "AirLift 写入失败（代码 \(rc)）。可能留下部分书签文件，请先检查桌面。", lines: logBuffer.lines)
                     }
-                    continuation.resume()
+                    continuation.resume(returning: logBuffer.lines)
                 } catch {
                     continuation.resume(throwing: error)
                 }
@@ -127,15 +152,14 @@ final class WebClipViewModel: ObservableObject {
             }
             app.syncTargetHostsToRust()
             do {
-                try await WebClipEngine.install(spec: spec, png: png, pairingPath: PairingController.pairingFilePath())
-                update(spec.id, status: "写入接口返回成功，桌面效果未验证")
+                let lines = try await WebClipEngine.install(spec: spec, png: png, pairingPath: PairingController.pairingFilePath())
+                update(spec.id, status: "写入接口返回成功，桌面效果未验证", diagnostic: lines.joined(separator: "\n"))
                 status = "写入接口已返回成功。请刷新桌面后检查图标；这不代表系统已识别或启动验证通过。"
                 mayRefresh = true
             } catch {
-                let detail = error.localizedDescription
-                if let failure = error as? WebClipError,
-                   case .transport(let message) = failure,
-                   WebClipConnectionFailure.isBeforeWrite(message) {
+                let failure = error as? WebClipAttemptFailure
+                let detail = ([error.localizedDescription] + (failure?.lines ?? [])).joined(separator: "\n")
+                if let failure, WebClipConnectionFailure.isBeforeWrite(failure.message) {
                     blockedBundleID = nil
                     update(spec.id, status: "设备连接失败，未开始写入", diagnostic: detail)
                     status = "请检查本地 VPN、目标 IP 和本机配对文件，再手动重试。"

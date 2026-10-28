@@ -246,6 +246,7 @@ struct WebClipView: View {
                         DisclosureGroup("排查信息") {
                             if let diagnostic = receipt.diagnostic {
                                 Text(diagnostic).font(.caption).textSelection(.enabled)
+                                ShareLink(item: diagnostic) { Label("导出诊断日志", systemImage: "square.and.arrow.up") }
                             }
                             Text(receipt.spec.targetPath).font(.system(.caption2, design: .monospaced)).textSelection(.enabled)
                         }
