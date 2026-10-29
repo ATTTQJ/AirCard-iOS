@@ -127,7 +127,7 @@ jobs:
           xcrun simctl boot "$DEVICE_ID"
           xcrun simctl bootstatus "$DEVICE_ID" -b
           set -o pipefail
-          xcodebuild test -project AirCard-iOS.xcodeproj -scheme AirCard-WebClip-UI -destination "platform=iOS Simulator,id=$DEVICE_ID" -resultBundlePath build/WebClipUI.xcresult -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO 2>&1 | tee build/ui-test.log
+          xcodebuild test -project AirCard-iOS.xcodeproj -scheme AirCard-WebClip-UI -destination "platform=iOS Simulator,id=$DEVICE_ID" -resultBundlePath build/WebClipUI.xcresult -parallel-testing-enabled NO -only-testing:AirCard-WebClipUITests -only-testing:AirCard-iOSTests/WebClipReportRefreshTests CODE_SIGNING_ALLOWED=NO 2>&1 | tee build/ui-test.log
       - name: Export screen captures
         if: always()
         run: |

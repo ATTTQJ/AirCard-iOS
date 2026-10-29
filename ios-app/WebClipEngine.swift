@@ -152,6 +152,8 @@ final class WebClipViewModel: ObservableObject {
     @Published var mayRefresh = false
     @Published var blockedBundleID: String?
     @Published var directoryReport = UserDefaults.standard.string(forKey: "webclip.directoryReport")
+    @Published var isVerifyingDirectory = false
+    @Published var directoryReportPresentation: DiagnosticReportSnapshot?
     private let storageKey = "atttqj.webclips.receipts.v1"
 
     init() {
@@ -229,19 +231,38 @@ final class WebClipViewModel: ObservableObject {
         app.refreshNetworkStatus()
         guard app.hasPairingFile, app.vpnUp else { error = "请先完成配对并连接 LocalDevVPN。"; return }
         isRunning = true
+        isVerifyingDirectory = true
+        error = nil
+        directoryReportPresentation = nil
+        let startedAt = Date()
         app.webClipIsRunning = true
         let previousIdle = UIApplication.shared.isIdleTimerDisabled
         UIApplication.shared.isIdleTimerDisabled = true
         defer {
             isRunning = false
+            isVerifyingDirectory = false
             app.webClipIsRunning = false
             UIApplication.shared.isIdleTimerDisabled = previousIdle
         }
         do {
             app.syncTargetHostsToRust()
-            directoryReport = try await WebClipEngine.verifyDirectory(pairingPath: PairingController.pairingFilePath())
-            UserDefaults.standard.set(directoryReport, forKey: "webclip.directoryReport")
-        } catch { self.error = error.localizedDescription }
+            let result = try await WebClipEngine.verifyDirectory(pairingPath: PairingController.pairingFilePath())
+            completeDirectoryReport(result, startedAt: startedAt)
+        } catch {
+            // A failed new attempt must not leave the previous result looking current.
+            completeDirectoryReport("本次目录验证未完成：\(error.localizedDescription)", startedAt: startedAt)
+        }
+    }
+
+    func completeDirectoryReport(_ result: String, startedAt: Date, completedAt: Date = Date()) {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+        let formatter = ISO8601DateFormatter()
+        let report = "验证开始：\(formatter.string(from: startedAt))\n验证完成：\(formatter.string(from: completedAt))\nApp 版本：\(version)\n\n\(result)"
+        directoryReport = report
+        UserDefaults.standard.set(report, forKey: "webclip.directoryReport")
+        // The sheet is driven by the completed value and a fresh identity, not a
+        // boolean presentation closure that may still hold the previous report.
+        directoryReportPresentation = DiagnosticReportSnapshot(report: report)
     }
 
     private func update(_ id: UUID, status: String, diagnostic: String? = nil) {

@@ -327,3 +327,4 @@
 "保存为 TXT 文件" = "Save as TXT file";
 "报告文件已保存。" = "Report file saved.";
 "保存报告失败" = "Could not save report";
+"正在验证目录，完成后将显示本次报告…" = "Verifying the directory. This run's report will open when finished…";

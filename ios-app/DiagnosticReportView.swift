@@ -1,6 +1,11 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+struct DiagnosticReportSnapshot: Identifiable {
+    let id = UUID()
+    let report: String
+}
+
 struct DiagnosticTextDocument: FileDocument {
     static var readableContentTypes: [UTType] { [.plainText] }
     var text: String

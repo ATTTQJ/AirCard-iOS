@@ -52,9 +52,17 @@ struct WebClipView: View {
                     Button("验证 WebClips 目录") { showDirectoryConfirm = true }
                         .accessibilityIdentifier("webclip.verifyDirectory")
                         .disabled(!supported || !app.hasPairingFile || !app.vpnUp || model.isRunning || otherOperationRunning)
-                    if let report = model.directoryReport {
+                    if model.isVerifyingDirectory {
+                        ProgressView("正在验证目录，完成后将显示本次报告…")
+                            .accessibilityIdentifier("webclip.directoryProgress")
+                    } else if let report = model.directoryReport {
                         Text(String(report.prefix(180))).font(.caption).textSelection(.enabled)
-                        DiagnosticReportActions(report: report)
+                        Button {
+                            model.directoryReportPresentation = DiagnosticReportSnapshot(report: report)
+                        } label: {
+                            Label("查看、复制或保存完整报告", systemImage: "doc.text")
+                        }
+                        .accessibilityIdentifier("webclip.openReport")
                     }
                 }
                 if model.mayRefresh {
@@ -128,6 +136,9 @@ struct WebClipView: View {
             } message: { Text(LocalizedStringKey(model.error ?? "")) }
             .sheet(isPresented: $showHistory) { historySheet }
             .sheet(isPresented: $showHelp) { helpSheet }
+            .sheet(item: $model.directoryReportPresentation) { snapshot in
+                DiagnosticReportView(report: snapshot.report)
+            }
         }
     }
 
