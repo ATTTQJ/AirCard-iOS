@@ -6,6 +6,7 @@ set -euo pipefail
 
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode-beta.app/Contents/Developer}"
 export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-18.0}"
+BUILD_SIMULATOR="${AIRLIFT_BUILD_SIMULATOR:-1}"
 
 # Make ~/.cargo visible to non-login shells (Xcode build phases, CI)
 # shellcheck disable=SC1090
@@ -20,21 +21,25 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT/rust-core"
 
 echo "==> Installing iOS targets (if needed)"
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+rustup target add aarch64-apple-ios
+if [ "$BUILD_SIMULATOR" = "1" ]; then
+  rustup target add aarch64-apple-ios-sim
+fi
 
 echo "==> Building Rust static libs (release)"
 cargo build --locked --release --target aarch64-apple-ios
-cargo build --locked --release --target aarch64-apple-ios-sim
+if [ "$BUILD_SIMULATOR" = "1" ]; then
+  cargo build --locked --release --target aarch64-apple-ios-sim
+fi
 
 cd "$ROOT"
 echo "==> Repackaging AirliftFFI.xcframework"
 rm -rf "$ROOT/AirliftFFI.xcframework"
-xcodebuild -create-xcframework \
-  -library rust-core/target/aarch64-apple-ios/release/libairlift_ffi.a \
-  -headers rust-core/include \
-  -library rust-core/target/aarch64-apple-ios-sim/release/libairlift_ffi.a \
-  -headers rust-core/include \
-  -output "$ROOT/AirliftFFI.xcframework"
+FRAMEWORK_ARGS=(-library rust-core/target/aarch64-apple-ios/release/libairlift_ffi.a -headers rust-core/include)
+if [ "$BUILD_SIMULATOR" = "1" ]; then
+  FRAMEWORK_ARGS+=(-library rust-core/target/aarch64-apple-ios-sim/release/libairlift_ffi.a -headers rust-core/include)
+fi
+xcodebuild -create-xcframework "${FRAMEWORK_ARGS[@]}" -output "$ROOT/AirliftFFI.xcframework"
 
 echo "==> Done."
 echo "    Regenerate the Xcode project with: xcodegen generate"

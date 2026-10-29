@@ -4,6 +4,11 @@ on:
   push:
     branches: [main, 'webclip/**']
   workflow_dispatch:
+    inputs:
+      run_ui_tests:
+        description: Also build the simulator core and run UI/report regression tests
+        type: boolean
+        default: false
 
 env:
   DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
@@ -35,7 +40,9 @@ jobs:
           source "$HOME/.cargo/env"
           set -o pipefail
           cargo test --locked --manifest-path rust-core/Cargo.toml --lib 2>&1 | tee build/native-tests.log
-      - name: Rebuild device and simulator frameworks
+      - name: Rebuild device core (simulator only when requested)
+        env:
+          AIRLIFT_BUILD_SIMULATOR: ${{ github.event_name == 'workflow_dispatch' && inputs.run_ui_tests && '1' || '0' }}
         run: |
           mkdir -p build
           set -o pipefail
@@ -107,6 +114,7 @@ jobs:
           retention-days: 7
 
   ui-smoke:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_ui_tests }}
     needs: native-core
     name: Check Chinese UI and WebClip entry
     runs-on: macos-26

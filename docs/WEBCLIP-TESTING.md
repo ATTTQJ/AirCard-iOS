@@ -107,6 +107,8 @@ App 是否直接启动、手动删除及重启后的行为均需实机验证。
 
 ## 构建
 
+默认 push 和手动构建只生成设备核心和未签名 IPA，不编译模拟器或运行 UI 测试。需要界面/报告回归时，在手动 Actions 中开启 `run_ui_tests`。本地 `AIRLIFT_BUILD_SIMULATOR=0 bash build-ios.sh` 可仅生成设备框架；不设置时保留设备与模拟器双框架行为。
+
 GitHub Actions 在 macOS 上运行 XcodeGen，检查 payload/path/version gate，然后编译设备版 IPA。
 不需要开发者证书或仓库 secrets。不要把证书、密码或配对文件加入工作流。
 
